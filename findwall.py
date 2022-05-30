@@ -16,17 +16,17 @@ BLOCKED_PORTS = []
 
 def show_blocked_ports(udp):
     if udp:
-        message = "Blocked UDP ports: " + str(sorted(BLOCKED_PORTS))
+        message = f"Blocked UDP ports: {str(sorted(BLOCKED_PORTS))}"
     else:
-        message = "Blocked TCP ports: " + str(sorted(BLOCKED_PORTS))
+        message = f"Blocked TCP ports: {str(sorted(BLOCKED_PORTS))}"
     error(message)
 
 
 def open_remote_port(session, port_to_scan, udp):
-    command = "echo test | nc -nlp " + str(port_to_scan)
+    command = f"echo test | nc -nlp {str(port_to_scan)}"
     if udp:
-        command = command + " -u"
-    command = command + " > /dev/null 2>&1 &"
+        command = f"{command} -u"
+    command = f"{command} > /dev/null 2>&1 &"
     stdin, stdout, stderr = session.exec_command(command)
     time.sleep(2)
 
@@ -47,7 +47,9 @@ def check_remote_port(session, ssh_host, port_to_scan, udp):
         # print(err)
     finally:
         s.close()
-        stdin, stdout, stderr = session.exec_command("kill -9 $(lsof -t -i:" + str(port_to_scan) +")")
+        stdin, stdout, stderr = session.exec_command(
+            f"kill -9 $(lsof -t -i:{str(port_to_scan)})"
+        )
 
 
 def close_session(session):
@@ -99,9 +101,8 @@ def parse_port_range(ports):
     # tokens are comma seperated values
     tokens = [x.strip() for x in ports.split(',')]
     for i in tokens:
-        if len(i) > 0:
-            if i[:1] == "<":
-                i = "1-%s"%(i[1:])
+        if len(i) > 0 and i[:1] == "<":
+            i = f"1-{i[1:]}"
         try:
             # typically tokens are plain old integers
             selection.add(int(i))
@@ -114,29 +115,29 @@ def parse_port_range(ports):
                     # we have items seperated by a dash
                     # try to build a valid range
                     first = token[0]
-                    last = token[len(token)-1]
+                    last = token[-1]
                     for x in range(first, last+1):
                         selection.add(x)
             except:
                 # not an int and not a range...
                 invalid.add(i)
     # Report invalid tokens before returning valid selection
-    if len(invalid) > 0:
-        print("Invalid set: " + str(invalid))
+    if invalid:
+        print(f"Invalid set: {invalid}")
     return sorted(selection)
 
 
 def info(message):
-    print('[+] ' + message)
+    print(f'[+] {message}')
 
 
 def warning(message):
-    print(Fore.YELLOW + '[*] ' + message)
+    print(f'{Fore.YELLOW}[*] {message}')
     print(Style.RESET_ALL)
 
 
 def error(message):
-    print(Fore.RED + '[!] ' + message)
+    print(f'{Fore.RED}[!] {message}')
     print(Style.RESET_ALL)
 
 
@@ -182,13 +183,13 @@ def main():
     threads = args.threads
 
     if threads > MAX_THREADS:
-        error("The max number of threads is " + MAX_THREADS)
+        error(f"The max number of threads is {MAX_THREADS}")
         exit(1)
 
     if not ask_ssh_pass and not ssh_password and not ssh_key:
         error("Specify a password or a key file for the remote SSH host")
         exit(1)
-        
+
     if ask_ssh_pass:
         ssh_password = getpass.getpass(prompt = 'Enter the SSH password')
 
